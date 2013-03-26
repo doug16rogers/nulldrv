@@ -82,20 +82,21 @@ VOID append_time_to_file(PDEVICE_OBJECT DeviceObject,
 
     if (NT_SUCCESS(status))
     {
-        char buf[0x40] = "";
+        char buf[0x80] = "";
         LARGE_INTEGER now;
         LARGE_INTEGER loc;
         TIME_FIELDS tim;
         KeQuerySystemTime(&now);
         ExSystemTimeToLocalTime(&now, &loc);
         RtlTimeToTimeFields(&loc, &tim);
-        RtlStringCchPrintfA(buf, sizeof(buf)-1, "%04u-%02u-%02u %02u:%02u:%02u\r\n",
+        RtlStringCchPrintfA(buf, sizeof(buf)-1, "%04u-%02u-%02u %02u:%02u:%02u %s compiled %s %s\r\n",
                             (unsigned) tim.Year, (unsigned) tim.Month,  (unsigned) tim.Day,
-                            (unsigned) tim.Hour, (unsigned) tim.Minute, (unsigned) tim.Second);
+                            (unsigned) tim.Hour, (unsigned) tim.Minute, (unsigned) tim.Second,
+                            DRIVER_NAME, __DATE__, __TIME__);
         buf[sizeof(buf)-1] = 0;
         ZwWriteFile(handle, NULL, NULL, NULL, &io_status, (PVOID) buf, strlen(buf), NULL, NULL);
         ZwClose(handle);
-        DbgPrint("%s: Loaded at %s\r\n", DRIVER_NAME, buf);
+        DbgPrint("%s: Wrote to file: %s", DRIVER_NAME, buf);   // buf already contains newline.
     }
     else
     {
